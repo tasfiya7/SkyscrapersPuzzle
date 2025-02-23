@@ -14,6 +14,7 @@ int main(int argc, char **argv) {
         return 1; // Exit with an error code
     }
     
+ 
     print_board(size);
     handle_user_input(size);
     return 0;

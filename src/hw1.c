@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <string.h>  
+
 
 #include "hw1.h"
 
@@ -16,9 +18,6 @@ int length = 5;
 
 
 int initialize_board(const char *initial_state, const char *keys, int size) {
-	(void) initial_state;
-	(void) keys;
-	(void) size;
 
 	if (size < 2 || size > MAX_LENGTH) {
         return 0;
@@ -34,12 +33,28 @@ int initialize_board(const char *initial_state, const char *keys, int size) {
         }
     }
 
+
+
 	//key string 
 	index = 0;
     for (int i = 0; i < size; i++) top_key[i] = keys[index++] - '0';
     for (int i = 0; i < size; i++) bottom_key[i] = keys[index++] - '0';
     for (int i = 0; i < size; i++) left_key[i] = keys[index++] - '0';
     for (int i = 0; i < size; i++) right_key[i] = keys[index++] - '0';
+
+// DEBUG: Print parsed clue values to check correctness
+printf("DEBUG: Clue Values\n");
+printf("Top: ");
+for (int i = 0; i < size; i++) printf("%d ", top_key[i]);
+printf("\nBottom: ");
+for (int i = 0; i < size; i++) printf("%d ", bottom_key[i]);
+printf("\nLeft: ");
+for (int i = 0; i < size; i++) printf("%d ", left_key[i]);
+printf("\nRight: ");
+for (int i = 0; i < size; i++) printf("%d ", right_key[i]);
+printf("\n");
+
+
 
 	//validate board state
 	for (int i = 0; i < size; i++) {
@@ -70,6 +85,8 @@ int initialize_board(const char *initial_state, const char *keys, int size) {
     
     return 1;
 }
+
+
 
 
 void print_board(int size) {
