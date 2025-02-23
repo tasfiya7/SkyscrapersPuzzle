@@ -12,6 +12,9 @@
 int initialize_board(const char *initial_state, const char *keys, int size);
 int solve(const char *initial_state, const char *keys, int size);
 void print_board(int size);
+bool is_valid_move(int size, char piece, int row, int col);
+void handle_user_input(int size);
+bool validate_visibility(int size);
 
 /* Hints from our solution (feel free to use or ignore):
 
