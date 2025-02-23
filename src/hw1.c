@@ -103,6 +103,91 @@ void print_board(int size) {
 }
 
 
+bool is_valid_move(int size, char piece, int row, int col) {
+    // Check if the cell is already occupied
+    if (board[row][col] != '-') {
+        printf("Invalid choice. That space is already occupied.\n");
+        return false;
+    }
+    
+    // Check for duplicate numbers in the row
+    for (int j = 0; j < size; j++) {
+        if (board[row][j] == piece) {
+            printf("Invalid choice. There is already a building with that height in that row.\n");
+            return false;
+        }
+    }
+    
+    // Check for duplicate numbers in the column
+    for (int i = 0; i < size; i++) {
+        if (board[i][col] == piece) {
+            printf("Invalid choice. There is already a building with that height in that column.\n");
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+
+void handle_user_input(int size) {
+    char choice;
+    int row, col;
+    while (1) {
+        printf("Choose a piece (1-%d) or q to quit: ", size);
+        scanf(" %c", &choice);
+        if (choice == 'q') {
+            printf("Game exited.\n");
+            break;
+        }
+        if (choice < '1' || choice > ('0' + size)) {
+            printf("Invalid choice. Choose a piece (1-%d) or q to quit: ", size);
+            continue;
+        }
+
+        printf("Choose a row (0-%d): ", size - 1);
+        scanf("%d", &row);
+        if (row < 0 || row >= size) {
+            printf("Invalid choice. Choose a row (0-%d): ", size - 1);
+            continue;
+        }
+
+        printf("Choose a column (0-%d): ", size - 1);
+        scanf("%d", &col);
+        if (col < 0 || col >= size) {
+            printf("Invalid choice. Choose a column (0-%d): ", size - 1);
+            continue;
+        }
+
+        if (!is_valid_move(size, choice, row, col)) {
+            continue;
+        }
+
+        board[row][col] = choice;
+        print_board(size);
+        
+        //if board is full and valid
+        bool board_full = true;
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (board[i][j] == '-') {
+                    board_full = false;
+                    break;
+                }
+            }
+            if (!board_full) break;
+        }
+        
+        if (board_full && validate_visibility(size)) {
+            printf("Congratulations, you have filled the board!\n");
+            print_board(size);
+            break;
+        }
+    }
+}
+
+
+
 int solve(const char *initial_state, const char *keys, int size){
 	(void) initial_state;
 	(void) keys;
