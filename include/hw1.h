@@ -11,13 +11,13 @@
 //Required:
 int initialize_board(const char *initial_state, const char *keys, int size);
 int solve(const char *initial_state, const char *keys, int size);
-
+void print_board(int size);
 
 /* Hints from our solution (feel free to use or ignore):
 
 Part 1
 
-void print_board();
+void print_board(); done
 int get_move();
 int check_dupes_col(int col);
 int check_dupes_row(int row);
