@@ -42,17 +42,6 @@ int initialize_board(const char *initial_state, const char *keys, int size) {
     for (int i = 0; i < size; i++) left_key[i] = keys[index++] - '0';
     for (int i = 0; i < size; i++) right_key[i] = keys[index++] - '0';
 
-// DEBUG: Print parsed clue values to check correctness
-printf("DEBUG: Clue Values\n");
-printf("Top: ");
-for (int i = 0; i < size; i++) printf("%d ", top_key[i]);
-printf("\nBottom: ");
-for (int i = 0; i < size; i++) printf("%d ", bottom_key[i]);
-printf("\nLeft: ");
-for (int i = 0; i < size; i++) printf("%d ", left_key[i]);
-printf("\nRight: ");
-for (int i = 0; i < size; i++) printf("%d ", right_key[i]);
-printf("\n");
 
 
 
