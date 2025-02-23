@@ -103,6 +103,60 @@ void print_board(int size) {
 }
 
 
+int count_visible_buildings(char line[MAX_LENGTH], int size) {
+    int max_height = 0;
+    int visible_count = 0;
+    for (int i = 0; i < size; i++) {
+        if (line[i] > max_height) {
+            max_height = line[i];
+            visible_count++;
+        }
+    }
+    return visible_count;
+}
+
+bool validate_visibility(int size) {
+    char temp[MAX_LENGTH];
+    
+    // Check top and bottom keys
+    for (int col = 0; col < size; col++) {
+        for (int row = 0; row < size; row++) {
+            temp[row] = board[row][col];
+        }
+        if (top_key[col] > 0 && count_visible_buildings(temp, size) != top_key[col]) {
+            return false;
+        }
+        
+        for (int row = 0; row < size; row++) {
+            temp[row] = board[size - 1 - row][col];
+        }
+        if (bottom_key[col] > 0 && count_visible_buildings(temp, size) != bottom_key[col]) {
+            return false;
+        }
+    }
+    
+    // Check left and right keys
+    for (int row = 0; row < size; row++) {
+        for (int col = 0; col < size; col++) {
+            temp[col] = board[row][col];
+        }
+        if (left_key[row] > 0 && count_visible_buildings(temp, size) != left_key[row]) {
+            return false;
+        }
+        
+        for (int col = 0; col < size; col++) {
+            temp[col] = board[row][size - 1 - col];
+        }
+        if (right_key[row] > 0 && count_visible_buildings(temp, size) != right_key[row]) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+
+
 bool is_valid_move(int size, char piece, int row, int col) {
     // Check if the cell is already occupied
     if (board[row][col] != '-') {
