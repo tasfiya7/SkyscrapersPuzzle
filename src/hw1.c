@@ -20,7 +20,7 @@ int initialize_board(const char *initial_state, const char *keys, int size) {
 	(void) keys;
 	(void) size;
 
-	if (size < 4 || size > MAX_LENGTH) {
+	if (size < 2 || size > MAX_LENGTH) {
         return 0;
     }
 
