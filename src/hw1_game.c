@@ -15,5 +15,6 @@ int main(int argc, char **argv) {
     }
     
     print_board(size);
+    handle_user_input(size);
     return 0;
 }

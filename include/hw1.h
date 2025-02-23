@@ -15,6 +15,7 @@ void print_board(int size);
 bool is_valid_move(int size, char piece, int row, int col);
 void handle_user_input(int size);
 bool validate_visibility(int size);
+int count_visible_buildings(char line[MAX_LENGTH], int size);
 
 /* Hints from our solution (feel free to use or ignore):
 
