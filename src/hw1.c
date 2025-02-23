@@ -190,6 +190,7 @@ void handle_user_input(int size) {
     while (1) {
         printf("Choose a piece (1-%d) or q to quit: ", size);
         scanf(" %c", &choice);
+
         if (choice == 'q') {
             printf("Game exited.\n");
             break;
@@ -218,9 +219,8 @@ void handle_user_input(int size) {
         }
 
         board[row][col] = choice;
-        print_board(size);
-        
-        //if board is full and valid
+
+        // Check if the board is full
         bool board_full = true;
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
@@ -231,14 +231,17 @@ void handle_user_input(int size) {
             }
             if (!board_full) break;
         }
-        
+
         if (board_full && validate_visibility(size)) {
             printf("Congratulations, you have filled the board!\n");
-            print_board(size);
+            print_board(size);  
             break;
         }
+
+        print_board(size);  
     }
 }
+
 
 
 
