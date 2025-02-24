@@ -273,7 +273,6 @@ bool violates_key_requirements(int size, char piece, int row, int col) {
                 continue;
             }
             if (choice == 'q') {
-                printf("Game exited.\n");
                 break;
             }
             if (choice < '1' || choice > ('0' + size)) {
