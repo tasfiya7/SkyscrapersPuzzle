@@ -327,6 +327,10 @@ bool is_valid_move(int size, char piece, int row, int col) {
 
 
 void handle_user_input(int size) {
+    #ifdef TESTING
+    // When testing automatically
+    return;
+#endif
     char choice;
     int row;
     int col;
