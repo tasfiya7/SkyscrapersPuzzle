@@ -18,6 +18,35 @@ char board[MAX_LENGTH][MAX_LENGTH] = {0};
 
 int length = 5;
 
+// Helper function to check for duplicates in the initial board.
+bool checkInitial(int size) {
+    // Check rows for duplicates.
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            if (board[i][j] != '-') {  // skip empty cells
+                for (int k = j + 1; k < size; k++) {
+                    if (board[i][j] == board[i][k]) {
+                        return true;  // duplicate found in the row
+                    }
+                }
+            }
+        }
+    }
+    // Check columns for duplicates.
+    for (int j = 0; j < size; j++) {
+        for (int i = 0; i < size; i++) {
+            if (board[i][j] != '-') {
+                for (int k = i + 1; k < size; k++) {
+                    if (board[i][j] == board[k][j]) {
+                        return true;  // duplicate found in the column
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
 
 int initialize_board(const char *initial_state, const char *keys, int size) {
 
@@ -44,6 +73,11 @@ int initialize_board(const char *initial_state, const char *keys, int size) {
     for (int i = 0; i < size; i++) left_key[i] = keys[index++] - '0';
     for (int i = 0; i < size; i++) right_key[i] = keys[index++] - '0';
 
+
+    // Check for duplicate placements in the initial board.
+    if (checkInitial(size)) {
+        return 0;
+    }
 
 
 
