@@ -166,7 +166,7 @@ bool validate_visibility(int size) {
     bool is_valid_move(int size, char piece, int row, int col) {
         // Check if the cell is already occupied
         if (board[row][col] != '-') {
-            printf("Invalid choice. That space is already occupied. ");
+            printf("Invalid choice. That space is already occupied. \n");
             return false;
         }
         
@@ -189,7 +189,7 @@ bool validate_visibility(int size) {
             }
         }
         if (duplicate) {
-            printf("Invalid choice. There is already a building with that height in that row or column. ");
+            printf("Invalid choice. There is already a building with that height in that row or column. \n");
             return false;
         }
         
