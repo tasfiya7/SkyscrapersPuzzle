@@ -359,8 +359,9 @@ void handle_user_input(int size) {
                     break;
                 }
                 if (result != 1 || row < 0 || row >= size) {
-                    while (getchar() != '\n'); 
-                        printf("Invalid choice. ");
+                    while (getchar() != '\n') { }
+                    printf("Invalid choice. ");
+
                         continue;  
                     }
                     break;  
@@ -377,8 +378,9 @@ void handle_user_input(int size) {
                 break;
         }
         if (result != 1 || col < 0 || col >= size) {
-            while (getchar() != '\n'); 
-                printf("Invalid choice. ");
+            while (getchar() != '\n') { }
+            printf("Invalid choice. ");
+
                 continue;  
         }
             break;  
