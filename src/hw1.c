@@ -164,6 +164,60 @@ bool validate_visibility(int size) {
 }
 
 
+bool violates_key_requirements(int size, char piece, int row, int col) {
+
+    bool row_complete = true;
+    char row_temp[MAX_LENGTH];
+    for (int j = 0; j < size; j++) {
+        if (j == col) {
+            row_temp[j] = piece;
+        } else {
+            row_temp[j] = board[row][j];
+            if (board[row][j] == '-') {
+                row_complete = false;
+            }
+        }
+    }
+    if (row_complete) {
+        // Check left key if provided.
+        if (left_key[row] > 0 && count_visible_buildings(row_temp, size) != left_key[row])
+            return true;
+        // Check right key: build a reversed copy.
+        char row_rev[MAX_LENGTH];
+        for (int j = 0; j < size; j++) {
+            row_rev[j] = row_temp[size - 1 - j];
+        }
+        if (right_key[row] > 0 && count_visible_buildings(row_rev, size) != right_key[row])
+            return true;
+    }
+    
+    // Check if placing piece would complete the column.
+    bool col_complete = true;
+    char col_temp[MAX_LENGTH];
+    for (int i = 0; i < size; i++) {
+        if (i == row) {
+            col_temp[i] = piece;
+        } else {
+            col_temp[i] = board[i][col];
+            if (board[i][col] == '-') {
+                col_complete = false;
+            }
+        }
+    }
+    if (col_complete) {
+        if (top_key[col] > 0 && count_visible_buildings(col_temp, size) != top_key[col])
+            return true;
+        char col_rev[MAX_LENGTH];
+        for (int i = 0; i < size; i++) {
+            col_rev[i] = col_temp[size - 1 - i];
+        }
+        if (bottom_key[col] > 0 && count_visible_buildings(col_rev, size) != bottom_key[col])
+            return true;
+    }
+    
+    return false;
+}
+
 
     bool is_valid_move(int size, char piece, int row, int col) {
         // Check if the cell is already occupied
@@ -181,17 +235,20 @@ bool validate_visibility(int size) {
                 break;
             }
         }
-        // If not found in row, check column for duplicate
-        if (!duplicate) {
-            for (int i = 0; i < size; i++) {
-                if (board[i][col] == piece) {
-                    duplicate = true;
-                    break;
-                }
+        for (int i = 0; i < size; i++) {
+            if (board[i][col] == piece) {
+                duplicate = true;
+                break;
             }
         }
         if (duplicate) {
-            printf("Invalid choice. There is already a building with that height in that row or column. \n");
+            printf("Invalid choice. There is already a building with that height in that row or column.\n");
+            return false;
+        }
+        
+        // Check key requirements if this move would complete a row or column.
+        if (violates_key_requirements(size, piece, row, col)) {
+            printf("Invalid choice. You violate one of the key requirements.\n");
             return false;
         }
         
