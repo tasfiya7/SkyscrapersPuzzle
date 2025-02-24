@@ -108,6 +108,52 @@ int initialize_board(const char *initial_state, const char *keys, int size) {
         }
     }
     
+    // Additional check: if any row is completely filled, its visible count must match the keys.
+    for (int i = 0; i < size; i++) {
+        bool complete = true;
+        char row_temp[MAX_LENGTH];
+        for (int j = 0; j < size; j++) {
+            row_temp[j] = board[i][j];
+            if (board[i][j] == '-') {
+                complete = false;
+            }
+        }
+        if (complete) {
+            // Check left key.
+            if (left_key[i] > 0 && count_visible_buildings(row_temp, size) != left_key[i])
+                return 0;
+            // Check right key (reverse the row).
+            char row_rev[MAX_LENGTH];
+            for (int j = 0; j < size; j++) {
+                row_rev[j] = row_temp[size - 1 - j];
+            }
+            if (right_key[i] > 0 && count_visible_buildings(row_rev, size) != right_key[i])
+                return 0;
+        }
+    }
+
+    // Similarly, check complete columns.
+    for (int j = 0; j < size; j++) {
+        bool complete = true;
+        char col_temp[MAX_LENGTH];
+        for (int i = 0; i < size; i++) {
+            col_temp[i] = board[i][j];
+            if (board[i][j] == '-') {
+                complete = false;
+            }
+        }
+        if (complete) {
+            if (top_key[j] > 0 && count_visible_buildings(col_temp, size) != top_key[j])
+                return 0;
+            char col_rev[MAX_LENGTH];
+            for (int i = 0; i < size; i++) {
+                col_rev[i] = col_temp[size - 1 - i];
+            }
+            if (bottom_key[j] > 0 && count_visible_buildings(col_rev, size) != bottom_key[j])
+                return 0;
+        }
+    }
+
     return 1;
 }
 
