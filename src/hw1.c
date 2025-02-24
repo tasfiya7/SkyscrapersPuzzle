@@ -19,430 +19,286 @@ char board[MAX_LENGTH][MAX_LENGTH] = {0};
 int length = 5;
 
 
-int printboard(int size)
-{
-    printf("    ");
-    for (int i = 0; i < size; i++) {
-        printf("%d ", top_key[i]);
-    }
-    printf("\n");
-    printf("    ");
-    for (int i = 0; i < size; i++) {
-        printf("v ");
-    }
-    printf("\n");
-   
-     for (int i = 0; i < size; i++) {
-        printf("%d > ", left_key[i]);
-       
-        for (int j = 0; j < size; j++) {
-            printf("%c ", board[i][j]);
-        }
+int initialize_board(const char *initial_state, const char *keys, int size) {
 
-
-        printf("< %d\n", right_key[i]);
-    }
-    printf("    ");
-    for (int i = 0; i < size; i++) {
-        printf("^ ");
-    }
-    printf("\n");
-    printf("    ");
-    for (int i = 0; i < size; i++) {
-        printf("%d ", bottom_key[i]);
-    }
-    printf("\n");
-    return 0;
-}
-
-
-char choosepiece(int size)
-{
-    printf("Choose a piece (1-%d) or q to quit: ", size );
-    char choice;
-    scanf(" %c", &choice);
-    return choice;
-}
-int chooserow(int size)
-{
-    printf("Choose a row (0-%d): ", size-1);
-    int rowchoice;
-    scanf(" %d", &rowchoice);
-    return rowchoice;
-}
-int choosecolumn(int size)
-{
-    printf("Choose a column (0-%d): ", size-1);
-    int columnchoice;
-    scanf(" %d", &columnchoice);
-    return columnchoice;
-}
-
-
-bool hasDuplicateInRow(int size, int row, char piece) {
-    for (int col = 0; col < size; col++) {
-        if (board[row][col] == piece) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
-bool hasDuplicateInColumn(int size, int col, char piece) {
-    for (int row = 0; row < size; row++) {
-        if (board[row][col] == piece) {
-            return true;
-        }
-    }
-    return false;
-}
-
-
-bool violatesKey(int size, int row, int col, int val) {
-    int value = val - '0';
-   
-    if(row == 0){
-        if (top_key[col] == 1) {
-            if (value != size) {
-                return true;
-            }
-        }  
-    }
-    if (col == 0) {
-        if (left_key[row] == 1) {
-            if (value != size) {
-                return true;
-            }
-        }  
-    }
-    if(row == size - 1){
-        if (bottom_key[col] == 1) {
-            if (value != size) {
-                return true;
-            }
-        }  
-    }
-    if(col == size - 1){
-        if (right_key[row] == 1) {
-            if (value != size) {
-                return true;
-            }
-        }  
+	if (size < 2 || size > MAX_LENGTH) {
+        return 0;
     }
 
 
-   
-    return false;  
-}
-
-
-void setAscendingOrder(int size) {
-    for (int i = 0; i < size; i++) {
-        if (top_key[i] == size) {
-            for (int j = 0; j < size; j++) {
-                board[j][i] = '1' + j;  // Set column in ascending order
-            }
-        }
-        if (bottom_key[i] == size) {
-            for (int j = 0; j < size; j++) {
-                board[size - 1 - j][i] = '1' + j;  // Set column in ascending order
-            }
-        }
-        if (left_key[i] == size) {
-            for (int j = 0; j < size; j++) {
-                board[i][j] = '1' + j;  // Set row in ascending order
-            }
-        }
-        if (right_key[i] == size) {
-            for (int j = 0; j < size; j++) {
-                board[i][size - 1 - j] = '1' + j;  // Set row in ascending order
-            }
-        }
-    }
-}
-
-
-
-
-bool checkInitial(int size)
-{
+	//parse initital state string
+	int index = 0;
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
-            if (board[i][j] != '-') {  // Skip empty cells
-                for (int k = j + 1; k < size; k++) {
-                    if (board[i][j] == board[i][k]) {
-                        return true;  // Duplicate found in the row
-                    }
+            board[i][j] = initial_state[index];
+            index++;
+        }
+    }
+
+
+
+	//key string 
+	index = 0;
+    for (int i = 0; i < size; i++) top_key[i] = keys[index++] - '0';
+    for (int i = 0; i < size; i++) bottom_key[i] = keys[index++] - '0';
+    for (int i = 0; i < size; i++) left_key[i] = keys[index++] - '0';
+    for (int i = 0; i < size; i++) right_key[i] = keys[index++] - '0';
+
+
+
+
+	//validate board state
+	for (int i = 0; i < size; i++) {
+        bool row_seen[MAX_LENGTH + 1] = {false};
+        bool col_seen[MAX_LENGTH + 1] = {false};
+        
+        for (int j = 0; j < size; j++) {
+            char row_val = board[i][j];
+            char col_val = board[j][i];
+            
+            if (row_val != '-') {
+                int r_num = row_val - '0';
+                if (r_num < 1 || r_num > size || row_seen[r_num]) {
+                    return 0; // Invalid number or duplicate in row
                 }
+                row_seen[r_num] = true;
             }
-        }
-    }
-
-
-    for (int j = 0; j < size; j++) {
-        for (int i = 0; i < size; i++) {
-            if (board[i][j] != '-') {  
-                for (int k = i + 1; k < size; k++) {
-                    if (board[i][j] == board[k][j]) {
-                        return true;
-                    }
+            
+            if (col_val != '-') {
+                int c_num = col_val - '0';
+                if (c_num < 1 || c_num > size || col_seen[c_num]) {
+                    return 0; // Invalid number or duplicate in column
                 }
+                col_seen[c_num] = true;
             }
         }
     }
-
-
-    return false;  
-}
-
-
-int checkWinner(int size)
-{
-    for (int a = 0; a < size; a++) {
-         for (int b = 0; b < size; b++) {
-            if (board[a][b] == '-'){
-                return 0;
-            }
-        }
-    }
+    
     return 1;
 }
 
 
-bool isValidMove(int size, int row, int col, char piece) {
-    if (board[row][col] != '-') {
-        return false;  
+
+
+void print_board(int size) {
+    printf("    ");
+    for (int i = 0; i < size; i++) {
+        printf("%d ", top_key[i]);
     }
-    if (hasDuplicateInRow(size, row, piece) || hasDuplicateInColumn(size, col, piece)) {
-        return false;
+    printf("\n    ");
+    for (int i = 0; i < size; i++) {
+        printf("v ");
     }
-    if (violatesKey(size, row, col, piece)) {
-        return false;  
+    printf("\n");
+    
+    for (int i = 0; i < size; i++) {
+        printf("%d > ", left_key[i]);
+        for (int j = 0; j < size; j++) {
+            printf("%c ", board[i][j]);
+        }
+        printf("< %d\n", right_key[i]);
     }
+    
+    printf("    ");
+    for (int i = 0; i < size; i++) {
+        printf("^ ");
+    }
+    printf("\n    ");
+    for (int i = 0; i < size; i++) {
+        printf("%d ", bottom_key[i]);
+    }
+    printf("\n");
+}
+
+
+int count_visible_buildings(char line[MAX_LENGTH], int size) {
+    int max_height = 0;
+    int visible_count = 0;
+    for (int i = 0; i < size; i++) {
+        if (line[i] > max_height) {
+            max_height = line[i];
+            visible_count++;
+        }
+    }
+    return visible_count;
+}
+
+bool validate_visibility(int size) {
+    char temp[MAX_LENGTH];
+    
+    // Check top and bottom keys
+    for (int col = 0; col < size; col++) {
+        for (int row = 0; row < size; row++) {
+            temp[row] = board[row][col];
+        }
+        if (top_key[col] > 0 && count_visible_buildings(temp, size) != top_key[col]) {
+            return false;
+        }
+        
+        for (int row = 0; row < size; row++) {
+            temp[row] = board[size - 1 - row][col];
+        }
+        if (bottom_key[col] > 0 && count_visible_buildings(temp, size) != bottom_key[col]) {
+            return false;
+        }
+    }
+    
+    // Check left and right keys
+    for (int row = 0; row < size; row++) {
+        for (int col = 0; col < size; col++) {
+            temp[col] = board[row][col];
+        }
+        if (left_key[row] > 0 && count_visible_buildings(temp, size) != left_key[row]) {
+            return false;
+        }
+        
+        for (int col = 0; col < size; col++) {
+            temp[col] = board[row][size - 1 - col];
+        }
+        if (right_key[row] > 0 && count_visible_buildings(temp, size) != right_key[row]) {
+            return false;
+        }
+    }
+    
     return true;
 }
 
 
 
-
-int initialize_board(const char *initial_state, const char *keys, int size) {
-    (void) initial_state;
-    (void) keys;
-    (void) size;
-
-
-    /*size = 4;
-    initial_state ="-314-4-23241-1--" ;
-    keys = "0003010002003000";
-    size = 4;
-    initial_state = "3--1---2---31--4";
-    keys = "0033300020200421";*/
-
-
-    for (int i = 0; i < size; i++) {
-        top_key[i] = keys[i] - '0';
-    }
-
-
-    for (int i = 0; i < size; i++) {
-        bottom_key[i] = keys[size + i] - '0';
-    }
-
-
-    for (int i = 0; i < size; i++) {
-        left_key[i] = keys[size + size + i] - '0';
-    }
-
-
-    for (int i = 0; i < size; i++) {
-        right_key[i] = keys[size + size + size + i] - '0';
-    }
-
-
-    int idx = 0;
-    for (int i = 0; i < size; i++) {
+    bool is_valid_move(int size, char piece, int row, int col) {
+        // Check if the cell is already occupied
+        if (board[row][col] != '-') {
+            printf("Invalid choice. That space is already occupied. \n");
+            return false;
+        }
+        
+        // Check for duplicate piece in the row or column
+        bool duplicate = false;
+        // Check row for duplicate
         for (int j = 0; j < size; j++) {
-            board[i][j] =  initial_state[idx];
-            idx++;
+            if (board[row][j] == piece) {
+                duplicate = true;
+                break;
+            }
         }
+        // If not found in row, check column for duplicate
+        if (!duplicate) {
+            for (int i = 0; i < size; i++) {
+                if (board[i][col] == piece) {
+                    duplicate = true;
+                    break;
+                }
+            }
+        }
+        if (duplicate) {
+            printf("Invalid choice. There is already a building with that height in that row or column. \n");
+            return false;
+        }
+        
+        return true;
     }
+    
 
 
-    if(checkInitial(size))
-    {
-        printf("Invalid initial board state.\n");
-        return 0;
-    }
-
-
-    int keepPlaying = 0;
-    while(!keepPlaying){
-
-
-        printboard(size);
+    void handle_user_input(int size) {
         char choice;
-        int rowchoice;
-        int columnchoice;
-
-
-        int validChoice = 0;
-        while(!validChoice){
-            choice = choosepiece(size);
-            if (choice == 'q'){
-                return 0;
+        int row, col;
+        bool exit_flag = false;
+        while (1) {
+            printf("Choose a piece (1-%d) or q to quit: ", size);
+            int result = scanf(" %c", &choice);
+            if (result == EOF) {  // No more input, exit gracefully
+                break;
             }
-            if (choice >= '1' && choice <= '0' + size) {
-                validChoice = 1;
-            }else{printf("Invalid choice. ");}
-        }
-        int validRowChoice = 0;
-        while(!validRowChoice){
-            rowchoice = chooserow(size);
-            if ((rowchoice < 0) || (rowchoice > size))
-            {
+            if (result != 1) {
+                while (getchar() != '\n'); // clear input buffer
+                printf("Invalid choice.\n");
+                continue;
+            }
+            if (choice == 'q') {
+                printf("Game exited.\n");
+                break;
+            }
+            if (choice < '1' || choice > ('0' + size)) {
                 printf("Invalid choice. ");
-            }else
-            {
-                validRowChoice = 1;
+                continue;
             }
-        }
-       
-        int validColumnChoice = 0;
-        while(!validColumnChoice){
-            columnchoice = choosecolumn(size);
-            if ((columnchoice < 0) || (columnchoice > size))
-            {
-                printf("Invalid choice. ");
-            }else{
-                validColumnChoice = 1;
+    
+            // Prompt for row
+                while (1) {
+                    printf("Choose a row (0-%d): ", size - 1);
+                    result = scanf("%d", &row);
+                    if (result == EOF) {
+                        exit_flag = true;
+                        break;
+                    }
+                    if (result != 1 || row < 0 || row >= size) {
+                        while (getchar() != '\n'); // clear input buffer
+                        printf("Invalid choice. ");
+                        continue;  // re-prompt for row
+                    }
+                    break;  // valid row entered
+                }
+                if (exit_flag)
+                    break;
+        
+                // Prompt for column using its own loop.
+                while (1) {
+                    printf("Choose a column (0-%d): ", size - 1);
+                    result = scanf("%d", &col);
+                    if (result == EOF) {
+                        exit_flag = true;
+                        break;
+                    }
+                    if (result != 1 || col < 0 || col >= size) {
+                        while (getchar() != '\n'); // clear input buffer
+                        printf("Invalid choice. ");
+                        continue;  // re-prompt for column
+                    }
+                    break;  // valid column entered
+                }
+                if (exit_flag)
+                    break;
+        
+    
+            if (!is_valid_move(size, choice, row, col)) {
+                print_board(size);  // Reprint board after an invalid move
+                continue;
             }
-        }
-
-
-        if (board[rowchoice][columnchoice] != '-')
-        {
-        printf("Invalid choice. That space is already occupied.\n");
-        }
-        else if (hasDuplicateInColumn(size, columnchoice, choice) == 1 || hasDuplicateInRow(size, rowchoice, choice) == 1)
-        {
-            printf("Invalid choice. There is already a building with that height in that row or column.\n");
-        }
-        /*else if(violatesKey(size, rowchoice, columnchoice, choice))
-        {
-            printf("Invalid choice. You violate one of the key requirements.\n");
-            //printf(" Whats going on %d this is the number",left_key[rowchoice]);
-           // printf("  %d this is the number %d col:%d",left_key[rowchoice], size, columnchoice);
-        }*/
-        else
-        {
-            board[rowchoice][columnchoice] = choice;
-        }
-       
-        if(checkWinner(size)){
-            if (violatesKey(size, rowchoice, columnchoice, choice))
-            {
-                printf("Invalid choice. You violate one of the key requirements.\n");
-                board[rowchoice][columnchoice] = '-';
-            }
-            else
-            {
-                printf("Congratulations, you have filled the board!\n");
-                keepPlaying = 1;
-            }
-        }
-    }
-    printboard(size);
-
-
-
-
-
-
-    return 1;
-}
-
-
-bool solvePuzzle(int size) {
-    for (int row = 0; row < size; row++) {
-        for (int col = 0; col < size; col++) {
-            if (board[row][col] == '-') {
-                for (char piece = '1'; piece <= '0' + size; piece++) {
-                    if (isValidMove(size, row, col, piece)) {
-                        board[row][col] = piece;  
-
-
-                        if (checkWinner(size)) {
-                            printboard(size);
-                            return true;  
-                        }
-                        if (solvePuzzle(size)) {
-                            return true;
-                        }
-
-
-                        board[row][col] = '-';
+    
+            board[row][col] = choice;
+    
+            // Check if board is full.
+            bool board_full = true;
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    if (board[i][j] == '-') {
+                        board_full = false;
+                        break;
                     }
                 }
-                return false;  
+                if (!board_full)
+                    break;
             }
+    
+            if (board_full && validate_visibility(size)) {
+                printf("Congratulations, you have filled the board!\n");
+                print_board(size);
+                break;
+            }
+    
+            print_board(size);
         }
-    }
-    return false;  
 }
+
+    
+    
+
 int solve(const char *initial_state, const char *keys, int size){
-    (void) initial_state;
-    (void) keys;
-    (void) size;
-
-
-   initial_state ="----------------" ;
-    keys = "2321321241221332";
-    size = 4;
-
-
-   
-    for (int i = 0; i < size; i++) {
-        top_key[i] = keys[i] - '0';
-    }
-
-
-    for (int i = 0; i < size; i++) {
-        bottom_key[i] = keys[size + i] - '0';
-    }
-
-
-    for (int i = 0; i < size; i++) {
-        left_key[i] = keys[size + size + i] - '0';
-    }
-
-
-    for (int i = 0; i < size; i++) {
-        right_key[i] = keys[size + size + size + i] - '0';
-    }
-
-
-    int idx = 0;
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            board[i][j] =  initial_state[idx];
-            idx++;
-        }
-    }
-
-
-    printboard(size);
-    setAscendingOrder(size);
-    printboard(size);
-
-
-    if (solvePuzzle(size)) {
-        printf("Congratulations, the puzzle is solved!\n");
-    } else {
-        printf("No solution found.\n");
-    }
-    return 1;
-   
+	(void) initial_state;
+	(void) keys;
+	(void) size;
+	
+	return 1;
+	
 }
-
-
