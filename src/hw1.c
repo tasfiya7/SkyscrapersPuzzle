@@ -438,9 +438,8 @@ bool violates_key_requirements(int size, char piece, int row, int col) {
 // Convert a single-bit mask to its corresponding value (1-indexed).
 int mask_to_value(int mask) {
     int val = 1;
-    while (mask >>= 1) {
+    while (mask >>= 1)
         val++;
-    }
     return val;
 }
 
@@ -449,8 +448,8 @@ bool is_single(int mask) {
     return mask && !(mask & (mask - 1));
 }
 
-// Initialize possibilities: for a fixed cell (board[i][j] != '-') assign that value only;
-// for an empty cell, allow all values.
+// Initialize possibilities for each cell.
+// If board[i][j] is '-', allow all values; if fixed, allow only that value.
 void init_possibilities(int size) {
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
@@ -465,25 +464,20 @@ void init_possibilities(int size) {
 }
 
 // --- HEURISTIC #1: Edge Clue Initialization ---
-// For each edge, adjust possibilities. Here we implement top and bottom edges,
-// and similarly for left/right.
+// For each edge, if the key forces an ordering, assign values or eliminate disallowed ones.
 void apply_edge_clue_initialization(int size) {
     // Top edge.
     for (int j = 0; j < size; j++) {
         int key = top_key[j];
         if (key == 1) {
-            // The first cell must be the tallest.
             possibilities[0][j] = 1 << (size - 1);
             board[0][j] = '0' + size;
         } else if (key == size) {
-            // Column must be in ascending order.
             for (int i = 0; i < size; i++) {
-                possibilities[i][j] = 1 << i;  // i=0 -> value 1, etc.
+                possibilities[i][j] = 1 << i; // i=0 means value 1
                 board[i][j] = '1' + i;
             }
         } else if (key > 1 && key < size) {
-            // For each cell in this column, with distance d from the top, remove values
-            // from (size - key + 2 + d) to size.
             for (int d = 0; d < size; d++) {
                 int start = size - key + 2 + d;
                 for (int val = start; val <= size; val++) {
@@ -506,7 +500,6 @@ void apply_edge_clue_initialization(int size) {
         } else if (key > 1 && key < size) {
             for (int d = 0; d < size; d++) {
                 int start = size - key + 2 + d;
-                // For the cell at row (size-1-d), remove values from start to size.
                 for (int val = start; val <= size; val++) {
                     possibilities[size - 1 - d][j] &= ~(1 << (val - 1));
                 }
@@ -556,25 +549,27 @@ void apply_edge_clue_initialization(int size) {
 }
 
 // --- HEURISTIC #2: Constraint Propagation ---
-// For every fixed cell, remove that value from its row and column.
+// Remove a fixed value from the possibility lists of cells in the same row and column.
 bool apply_constraint_propagation(int size) {
     bool progress = false;
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             if (is_single(possibilities[i][j])) {
                 int fixed = possibilities[i][j];
-                for (int k = 0; k < size; k++) {
-                    if (k != j) {
-                        int old = possibilities[i][k];
-                        possibilities[i][k] &= ~fixed;
-                        if (possibilities[i][k] != old) progress = true;
+                for (int col = 0; col < size; col++) {
+                    if (col != j) {
+                        int old = possibilities[i][col];
+                        possibilities[i][col] &= ~fixed;
+                        if (possibilities[i][col] != old)
+                            progress = true;
                     }
                 }
-                for (int k = 0; k < size; k++) {
-                    if (k != i) {
-                        int old = possibilities[k][j];
-                        possibilities[k][j] &= ~fixed;
-                        if (possibilities[k][j] != old) progress = true;
+                for (int row = 0; row < size; row++) {
+                    if (row != i) {
+                        int old = possibilities[row][j];
+                        possibilities[row][j] &= ~fixed;
+                        if (possibilities[row][j] != old)
+                            progress = true;
                     }
                 }
             }
@@ -584,10 +579,10 @@ bool apply_constraint_propagation(int size) {
 }
 
 // --- HEURISTIC #3: Process of Elimination ---
-// For each row and column, if a value appears in the possibility lists of only one cell, assign it.
+// In each row and column, if a candidate appears in exactly one cell, fix that cell.
 bool apply_process_of_elimination(int size) {
     bool progress = false;
-    // Process rows.
+    // For rows.
     for (int i = 0; i < size; i++) {
         for (int val = 1; val <= size; val++) {
             int bit = 1 << (val - 1);
@@ -605,7 +600,7 @@ bool apply_process_of_elimination(int size) {
             }
         }
     }
-    // Process columns.
+    // For columns.
     for (int j = 0; j < size; j++) {
         for (int val = 1; val <= size; val++) {
             int bit = 1 << (val - 1);
@@ -627,52 +622,47 @@ bool apply_process_of_elimination(int size) {
 }
 
 // --- HEURISTIC #4: Clue Elimination (Sequence Filtration) ---
-// For rows: generate all sequences consistent with possibilities and edge keys, then for each cell, 
-// restrict possibilities to the union of values that appear in that cell over all valid sequences.
+// For each row (and similarly each column), generate all valid complete sequences
+// consistent with the current possibilities and edge clues, then for each cell,
+// restrict its possibilities to the union of candidate values in that cell among all sequences.
 int visible_count_in_sequence(int seq[], int len) {
     int count = 0, max = 0;
     for (int i = 0; i < len; i++) {
-        if (seq[i] > max) { max = seq[i]; count++; }
+        if (seq[i] > max) {
+            max = seq[i];
+            count++;
+        }
     }
     return count;
 }
 
-// Recursive helper to generate valid sequences for a row.
+// Generate all valid sequences for row 'row' recursively.
 void generate_valid_row_sequences(int size, int row, int col, int current_seq[],
                                   bool used[], int union_vals[], int *valid_count) {
     if (col == size) {
-        // Check left key.
-        if (left_key[row] > 0) {
-            int vis = visible_count_in_sequence(current_seq, size);
-            if (vis != left_key[row]) return;
-        }
-        // Check right key.
-        if (right_key[row] > 0) {
-            int rev_seq[MAX_LENGTH];
-            for (int j = 0; j < size; j++) {
-                rev_seq[j] = current_seq[size - 1 - j];
-            }
-            int vis = visible_count_in_sequence(rev_seq, size);
-            if (vis != right_key[row]) return;
-        }
-        // Valid sequence found; update union for each position.
+        if (left_key[row] > 0 && visible_count_in_sequence(current_seq, size) != left_key[row])
+            return;
+        int rev_seq[MAX_LENGTH];
+        for (int j = 0; j < size; j++)
+            rev_seq[j] = current_seq[size - 1 - j];
+        if (right_key[row] > 0 && visible_count_in_sequence(rev_seq, size) != right_key[row])
+            return;
+        // Valid sequence: update union.
         for (int j = 0; j < size; j++) {
             union_vals[j] |= (1 << (current_seq[j] - 1));
         }
         (*valid_count)++;
         return;
     }
-    // If cell is fixed.
     if (is_single(possibilities[row][col])) {
-        int fixed_val = mask_to_value(possibilities[row][col]);
-        if (used[fixed_val]) return;
-        used[fixed_val] = true;
-        current_seq[col] = fixed_val;
+        int fixed = mask_to_value(possibilities[row][col]);
+        if (used[fixed]) return;
+        used[fixed] = true;
+        current_seq[col] = fixed;
         generate_valid_row_sequences(size, row, col + 1, current_seq, used, union_vals, valid_count);
-        used[fixed_val] = false;
+        used[fixed] = false;
         return;
     }
-    // For each candidate value.
     for (int val = 1; val <= size; val++) {
         int bit = 1 << (val - 1);
         if ((possibilities[row][col] & bit) && !used[val]) {
@@ -687,38 +677,30 @@ void generate_valid_row_sequences(int size, int row, int col, int current_seq[],
 void filter_row_possibilities(int size, int row) {
     int union_vals[MAX_LENGTH] = {0};
     int current_seq[MAX_LENGTH] = {0};
-    bool used[9] = {false}; // indices 1..size
+    bool used[9] = {false}; // values 1..size; index 0 unused.
     int valid_count = 0;
     generate_valid_row_sequences(size, row, 0, current_seq, used, union_vals, &valid_count);
     if (valid_count > 0) {
         for (int j = 0; j < size; j++) {
             if (!is_single(possibilities[row][j])) {
-                int old = possibilities[row][j];
                 possibilities[row][j] &= union_vals[j];
-                if (possibilities[row][j] != old && is_single(possibilities[row][j])) {
+                if (is_single(possibilities[row][j]))
                     board[row][j] = '0' + mask_to_value(possibilities[row][j]);
-                }
             }
         }
     }
 }
 
-// Similarly, for columns.
 void generate_valid_col_sequences(int size, int col, int row, int current_seq[],
                                   bool used[], int union_vals[], int *valid_count) {
     if (row == size) {
-        if (top_key[col] > 0) {
-            int vis = visible_count_in_sequence(current_seq, size);
-            if (vis != top_key[col]) return;
-        }
-        if (bottom_key[col] > 0) {
-            int rev_seq[MAX_LENGTH];
-            for (int i = 0; i < size; i++) {
-                rev_seq[i] = current_seq[size - 1 - i];
-            }
-            int vis = visible_count_in_sequence(rev_seq, size);
-            if (vis != bottom_key[col]) return;
-        }
+        if (top_key[col] > 0 && visible_count_in_sequence(current_seq, size) != top_key[col])
+            return;
+        int rev_seq[MAX_LENGTH];
+        for (int i = 0; i < size; i++)
+            rev_seq[i] = current_seq[size - 1 - i];
+        if (bottom_key[col] > 0 && visible_count_in_sequence(rev_seq, size) != bottom_key[col])
+            return;
         for (int i = 0; i < size; i++) {
             union_vals[i] |= (1 << (current_seq[i] - 1));
         }
@@ -726,12 +708,12 @@ void generate_valid_col_sequences(int size, int col, int row, int current_seq[],
         return;
     }
     if (is_single(possibilities[row][col])) {
-        int fixed_val = mask_to_value(possibilities[row][col]);
-        if (used[fixed_val]) return;
-        used[fixed_val] = true;
-        current_seq[row] = fixed_val;
+        int fixed = mask_to_value(possibilities[row][col]);
+        if (used[fixed]) return;
+        used[fixed] = true;
+        current_seq[row] = fixed;
         generate_valid_col_sequences(size, col, row + 1, current_seq, used, union_vals, valid_count);
-        used[fixed_val] = false;
+        used[fixed] = false;
         return;
     }
     for (int val = 1; val <= size; val++) {
@@ -754,11 +736,9 @@ void filter_col_possibilities(int size, int col) {
     if (valid_count > 0) {
         for (int i = 0; i < size; i++) {
             if (!is_single(possibilities[i][col])) {
-                int old = possibilities[i][col];
                 possibilities[i][col] &= union_vals[i];
-                if (possibilities[i][col] != old && is_single(possibilities[i][col])) {
+                if (is_single(possibilities[i][col]))
                     board[i][col] = '0' + mask_to_value(possibilities[i][col]);
-                }
             }
         }
     }
@@ -766,7 +746,7 @@ void filter_col_possibilities(int size, int col) {
 
 bool apply_clue_elimination(int size) {
     bool progress = false;
-    // Apply for rows.
+    // For rows.
     for (int i = 0; i < size; i++) {
         int before = 0, after = 0;
         for (int j = 0; j < size; j++) {
@@ -776,10 +756,9 @@ bool apply_clue_elimination(int size) {
         for (int j = 0; j < size; j++) {
             after += possibilities[i][j];
         }
-        if (after != before)
-            progress = true;
+        if (after != before) progress = true;
     }
-    // Apply for columns.
+    // For columns.
     for (int j = 0; j < size; j++) {
         int before = 0, after = 0;
         for (int i = 0; i < size; i++) {
@@ -789,25 +768,58 @@ bool apply_clue_elimination(int size) {
         for (int i = 0; i < size; i++) {
             after += possibilities[i][j];
         }
-        if (after != before)
-            progress = true;
+        if (after != before) progress = true;
     }
     return progress;
 }
 
+// --- BACKTRACKING FALLBACK ---
+// If the heuristics do not fully solve the board, use simple recursive backtracking.
+bool backtracking_solve(int size) {
+    int i, j;
+    bool found = false;
+    for (i = 0; i < size; i++) {
+        for (j = 0; j < size; j++) {
+            if (board[i][j] == '-') {
+                found = true;
+                break;
+            }
+        }
+        if (found) break;
+    }
+    if (!found) {
+        // Board is complete; check if it satisfies visibility.
+        return validate_visibility(size);
+    }
+    for (int val = 1; val <= size; val++) {
+        char c = '0' + val;
+        bool valid = true;
+        for (int k = 0; k < size; k++) {
+            if (board[i][k] == c || board[k][j] == c) {
+                valid = false;
+                break;
+            }
+        }
+        if (!valid) continue;
+        board[i][j] = c;
+        if (backtracking_solve(size)) return true;
+        board[i][j] = '-';
+    }
+    return false;
+}
+
 // --- SOLVE FUNCTION ---
-// This function initializes the board and keys from the provided strings,
-// sets up the possibilities, applies all four heuristics iteratively,
-// and finally prints the solved board.
+// This function initializes the board and key arrays from the given strings,
+// sets up the constraint list (possibilities), applies the heuristics iteratively,
+// and if needed uses backtracking as a fallback, then prints the final solved board.
 void solve(const char *initial_state, const char *keys, int size) {
-    // Initialize board from initial_state (row-major).
     int index = 0;
+    // Initialize board from the initial_state string (row-major order).
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             board[i][j] = initial_state[index++];
         }
     }
-    // Initialize keys.
     index = 0;
     for (int i = 0; i < size; i++) {
         top_key[i] = keys[index++] - '0';
@@ -822,13 +834,13 @@ void solve(const char *initial_state, const char *keys, int size) {
         right_key[i] = keys[index++] - '0';
     }
     
-    // Initialize constraint list (possibilities).
+    // Initialize the possibilities for each cell.
     init_possibilities(size);
     
     // Apply Heuristic #1: Edge Clue Initialization.
     apply_edge_clue_initialization(size);
     
-    // Iteratively apply heuristics until no progress is made.
+    // Iteratively apply Heuristics #2, #3, and #4 until no further progress.
     bool progress = true;
     while (progress) {
         progress = false;
@@ -840,6 +852,21 @@ void solve(const char *initial_state, const char *keys, int size) {
             progress = true;
     }
     
-    // Print final board state.
+    // If the board is not completely solved, use backtracking as a fallback.
+    bool complete = true;
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            if (board[i][j] == '-') {
+                complete = false;
+                break;
+            }
+        }
+        if (!complete) break;
+    }
+    if (!complete) {
+        backtracking_solve(size);
+    }
+    
+    //print the solved board.
     print_board(size);
 }
