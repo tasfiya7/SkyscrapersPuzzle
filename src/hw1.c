@@ -202,53 +202,54 @@ bool validate_visibility(int size) {
         char choice;
         int row, col;
         while (1) {
+            // Prompt for the piece
             printf("Choose a piece (1-%d) or q to quit: ", size);
-            int result = scanf(" %c", &choice);
-            if (result == EOF) {  // No more input, exit gracefully
-                break;
-            }
-            if (result != 1) {
+            if (scanf(" %c", &choice) != 1) {
                 while (getchar() != '\n'); // clear input buffer
-                printf("Invalid choice.\n");
-                continue;
+                printf("Invalid choice. ");
+                continue; // back to piece prompt
             }
             if (choice == 'q') {
-                printf("Game exited.\n");
+                printf("Game exited. ");
                 break;
             }
             if (choice < '1' || choice > ('0' + size)) {
-                printf("Invalid choice.\n");
-                continue;
+                printf("Invalid choice. ");
+                continue; // back to piece prompt
             }
     
-            // Prompt for row
-            printf("Choose a row (0-%d): ", size - 1);
-            if (scanf("%d", &row) == EOF) {  // Check for EOF
-                break;
-            }
-            if (row < 0 || row >= size) {
-                printf("Invalid choice.\n");
-                continue;
+            // Now prompt for row using its own loop.
+            while (1) {
+                printf("Choose a row (0-%d): ", size - 1);
+                if (scanf("%d", &row) != 1 || row < 0 || row >= size) {
+                    while (getchar() != '\n'); // clear input buffer
+                    printf("Invalid choice. ");
+                    // stay in this loop and re-prompt for row
+                    continue;
+                }
+                break;  // valid row entered
             }
     
-            // Prompt for column
-            printf("Choose a column (0-%d): ", size - 1);
-            if (scanf("%d", &col) == EOF) {  // Check for EOF
-                break;
-            }
-            if (col < 0 || col >= size) {
-                printf("Invalid choice.\n");
-                continue;
+            // And prompt for column using its own loop.
+            while (1) {
+                printf("Choose a column (0-%d): ", size - 1);
+                if (scanf("%d", &col) != 1 || col < 0 || col >= size) {
+                    while (getchar() != '\n'); // clear input buffer
+                    printf("Invalid choice. ");
+                    // stay in this loop and re-prompt for column
+                    continue;
+                }
+                break;  // valid column entered
             }
     
             if (!is_valid_move(size, choice, row, col)) {
-                print_board(size);  // Reprint board after an invalid move
+                print_board(size);  // Reprint board after invalid move
                 continue;
             }
     
             board[row][col] = choice;
     
-            // Check if board is full.
+            // Check if the board is full.
             bool board_full = true;
             for (int i = 0; i < size; i++) {
                 for (int j = 0; j < size; j++) {
@@ -270,7 +271,6 @@ bool validate_visibility(int size) {
             print_board(size);
         }
     }
-    
     
 
 
