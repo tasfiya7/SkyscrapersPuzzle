@@ -163,94 +163,105 @@ bool validate_visibility(int size) {
 
 
 
-bool is_valid_move(int size, char piece, int row, int col) {
-    // Check if the cell is already occupied
-    if (board[row][col] != '-') {
-        printf("Invalid choice. That space is already occupied.\n");
-        return false;
-    }
-    
-    // Check for duplicate numbers in the row
-    for (int j = 0; j < size; j++) {
-        if (board[row][j] == piece) {
-            printf("Invalid choice. There is already a building with that height in that row.\n");
+    bool is_valid_move(int size, char piece, int row, int col) {
+        // Check if the cell is already occupied
+        if (board[row][col] != '-') {
+            printf("Invalid choice. That space is already occupied.\n");
             return false;
         }
-    }
-    
-    // Check for duplicate numbers in the column
-    for (int i = 0; i < size; i++) {
-        if (board[i][col] == piece) {
-            printf("Invalid choice. There is already a building with that height in that column.\n");
-            return false;
+        
+        // Check for duplicate piece in the row or column
+        bool duplicate = false;
+        // Check row for duplicate
+        for (int j = 0; j < size; j++) {
+            if (board[row][j] == piece) {
+                duplicate = true;
+                break;
+            }
         }
-    }
-    
-    return true;
-}
-
-
-void handle_user_input(int size) {
-    char choice;
-    int row, col;
-    while (1) {
-        printf("Choose a piece (1-%d) or q to quit: ", size);
-        if (scanf(" %c", &choice) != 1) {
-            printf("Invalid choice. Choose a piece (1-%d) or q to quit: ", size);
-            while (getchar() != '\n'); // Clear buffer
-            continue;
-        }
-
-        if (choice == 'q') {
-            printf("Game exited.\n");
-            break;
-        }
-        if (choice < '1' || choice > ('0' + size)) {
-            printf("Invalid choice. Choose a piece (1-%d) or q to quit: ", size);
-            continue;
-        }
-
-        printf("Choose a row (0-%d): ", size - 1);
-        if (scanf("%d", &row) != 1 || row < 0 || row >= size) {
-            printf("Invalid choice. Choose a row (0-%d): ", size - 1);
-            while (getchar() != '\n'); // Clear buffer
-            continue;
-        }
-
-        printf("Choose a column (0-%d): ", size - 1);
-        if (scanf("%d", &col) != 1 || col < 0 || col >= size) {
-            printf("Invalid choice. Choose a column (0-%d): ", size - 1);
-            while (getchar() != '\n'); // Clear buffer
-            continue;
-        }
-
-        if (!is_valid_move(size, choice, row, col)) {
-            continue;
-        }
-
-        board[row][col] = choice;
-
-        // Check for win condition before printing the board
-        bool board_full = true;
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (board[i][j] == '-') {
-                    board_full = false;
+        // If not found in row, check column for duplicate
+        if (!duplicate) {
+            for (int i = 0; i < size; i++) {
+                if (board[i][col] == piece) {
+                    duplicate = true;
                     break;
                 }
             }
-            if (!board_full) break;
         }
-
-        if (board_full && validate_visibility(size)) {
-            printf("Congratulations, you have filled the board!\n");
-            print_board(size);
-            break;
+        if (duplicate) {
+            printf("Invalid choice. There is already a building with that height in that row or column.\n");
+            return false;
         }
-
-        print_board(size);
+        
+        return true;
     }
-}
+    
+
+
+    void handle_user_input(int size) {
+        char choice;
+        int row, col;
+        while (1) {
+            printf("Choose a piece (1-%d) or q to quit: ", size);
+            if (scanf(" %c", &choice) != 1) {
+                printf("Invalid choice. Choose a piece (1-%d) or q to quit: ", size);
+                while (getchar() != '\n'); // Clear buffer
+                continue;
+            }
+    
+            if (choice == 'q') {
+                printf("Game exited.\n");
+                break;
+            }
+            if (choice < '1' || choice > ('0' + size)) {
+                printf("Invalid choice. Choose a piece (1-%d) or q to quit: ", size);
+                continue;
+            }
+    
+            printf("Choose a row (0-%d): ", size - 1);
+            if (scanf("%d", &row) != 1 || row < 0 || row >= size) {
+                printf("Invalid choice. Choose a row (0-%d): ", size - 1);
+                while (getchar() != '\n'); // Clear buffer
+                continue;
+            }
+    
+            printf("Choose a column (0-%d): ", size - 1);
+            if (scanf("%d", &col) != 1 || col < 0 || col >= size) {
+                printf("Invalid choice. Choose a column (0-%d): ", size - 1);
+                while (getchar() != '\n'); // Clear buffer
+                continue;
+            }
+    
+            if (!is_valid_move(size, choice, row, col)) {
+                // After an error, reprint the board state before prompting again.
+                print_board(size);
+                continue;
+            }
+    
+            board[row][col] = choice;
+    
+            // Check for win condition before printing the board
+            bool board_full = true;
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    if (board[i][j] == '-') {
+                        board_full = false;
+                        break;
+                    }
+                }
+                if (!board_full) break;
+            }
+    
+            if (board_full && validate_visibility(size)) {
+                printf("Congratulations, you have filled the board!\n");
+                print_board(size);
+                break;
+            }
+    
+            print_board(size);
+        }
+    }
+    
 
 
 
