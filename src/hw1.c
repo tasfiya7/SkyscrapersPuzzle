@@ -204,7 +204,7 @@ bool validate_visibility(int size) {
         while (1) {
             printf("Choose a piece (1-%d) or q to quit: ", size);
             if (scanf(" %c", &choice) != 1) {
-                printf("Invalid choice. ", size);
+                printf("Invalid choice. ");
                 while (getchar() != '\n'); // Clear buffer
                 continue;
             }
@@ -214,7 +214,7 @@ bool validate_visibility(int size) {
                 break;
             }
             if (choice < '1' || choice > ('0' + size)) {
-                printf("Invalid choice. ", size);
+                printf("Invalid choice. ");
                 continue;
             }
     
